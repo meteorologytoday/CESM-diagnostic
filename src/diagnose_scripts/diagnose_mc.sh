@@ -293,7 +293,7 @@ if [ -f flag_plot_mc ] || [ -f flag_plot_mc_Y ]; then
 
 
     # MLD
-   python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=ocn_analysis3a_rg_MLD.nc --varname-mean=h_ML_AM --varname-var=h_ML_AAVAR --ylabel="Mixed-layer Depth [ \$ \\mathrm{m} \$ ]" --yscale="1" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="0,0,:" --extra-title=" Annual mean" --extra-filename="annual_mean" --display-varname="Mixed-Layer Depth" --y-range-mean="0,500" --y-range-std="0,300" --invert-y-axis
+   python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=ocn_analysis3a_rg_MLD.nc --varname-mean=HMXL_AM --varname-var=HMXL_AAVAR --ylabel="Mixed-layer Depth [ \$ \\mathrm{m} \$ ]" --yscale="1" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="0,0,:" --extra-title=" Annual mean" --extra-filename="annual_mean" --display-varname="Mixed-Layer Depth" --y-range-mean="0,500" --y-range-std="0,300" --invert-y-axis
 
     # PRECIP    
     python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=atm_analysis4a_precip.nc --varname-mean=PREC_TOTAL_AM --varname-var=PREC_TOTAL_AAVAR --ylabel="Precipitation [ \$ \\mathrm{mm} / year \$ ]" --yscale="3.171e-11" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="0,0,:" --extra-title=" Annual mean" --extra-filename="annual_mean" --display-varname="Precipitation" --y-range-mean="0,4000" --y-range-std="0,1500"
@@ -319,8 +319,8 @@ if [ -f flag_plot_mc ] || [ -f flag_plot_mc_Y ]; then
         python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=atm_analysis2a.nc --varname-mean=TREFHT_MM --varname-var=TREFHT_MAVAR --ylabel="Temperature [ \$ \\mathrm{deg C} \$ ]" --yscale="1" --y-offset="273.15" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="$(( $m - 1 )),0,:" --extra-title=" Month $m" --extra-filename="$(printf '%02d' $m)" --display-varname="Referenced Height Temperature" --y-range-mean="-30,30" --y-range-std="0,8"
 
 
-        # h_ML
-        python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=ocn_analysis3a_rg_MLD.nc --varname-mean=h_ML_MM --varname-var=h_ML_MAVAR --ylabel="Mixed-layer Depth [ \$ \\mathrm{m} \$ ]" --yscale="1" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="$(( $m - 1 )),0,:" --extra-title=" Month $m" --extra-filename="$(printf '%02d' $m)" --display-varname="Mixed-Layer Depth" --y-range-mean="0,500" --y-range-std="0,300" --invert-y-axis
+        # HMXL
+        python3 $script_plot_dir/plot_mc_meridional_mean_std.py --input-dir=$diag_data_dir --output-dir=$graph_data_dir --casenames=$casenames --data-file=ocn_analysis3a_rg_MLD.nc --varname-mean=HMXL_MM --varname-var=HMXL_MAVAR --ylabel="Mixed-layer Depth [ \$ \\mathrm{m} \$ ]" --yscale="1" --domain-file=$atm_domain --colors="$colors" --linestyles="$linestyles"  --legends=$legends --indexing="$(( $m - 1 )),0,:" --extra-title=" Month $m" --extra-filename="$(printf '%02d' $m)" --display-varname="Mixed-Layer Depth" --y-range-mean="0,500" --y-range-std="0,300" --invert-y-axis
 
 
         # PRECIP

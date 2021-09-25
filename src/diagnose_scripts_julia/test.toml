@@ -1,0 +1,16 @@
+diag-label = "TESTING"
+archive-root = "/glade/u/home/tienyiao/scratch-tienyiao/archive"
+
+[domains]
+atm = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.lnd.fv0.9x1.25_gx1v6.090309.nc"
+ocn = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx3v7.120323.nc"
+
+
+[diagsets.EMOM_CTL]
+    casename = "paper2021_EMOM_CTL"
+    year-rng = [ 2, 3 ]
+    
+[diagsets.MLM_CTL]
+    casename = "paper2021_MLM_CTL"
+    year-rng = [ 2, 4 ]
+ 

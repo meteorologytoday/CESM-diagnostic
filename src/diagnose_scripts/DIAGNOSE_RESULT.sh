@@ -163,20 +163,9 @@ fi
 
 echo "Start doing model comparison..."
 
-$script_dir/diagnose_mc_txt.sh     \
-    --casenames=$( join_by , "${casenames[@]}") \
-    --legends=$( join_by , "${legends[@]}") \
-    --sim-data-dir=$sim_data_dir                \
-    --diag-data-dir=$diag_data_dir              \
-    --graph-data-dir=$graph_data_dir            \
-    --atm-domain=$atm_domain                    \
-    --ocn-domain=$ocn_domain                    \
-    --diag-beg-year=$diag_beg_year      \
-    --diag-end-year=$diag_end_year      
-
-
+echo "Running diagnose_mc.sh"
 $script_dir/diagnose_mc.sh     \
-    --casenames=$( join_by , "${casenames[@]}") \
+    --casenames=$( join_by , "${legends[@]}") \
     --legends=$( join_by , "${legends[@]}") \
     --sim-data-dir=$sim_data_dir                \
     --diag-data-dir=$diag_data_dir              \
