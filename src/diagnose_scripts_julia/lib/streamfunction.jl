@@ -118,7 +118,7 @@ for y=parsed["beg-year"]:parsed["end-year"], m=1:12
                 defDim(ds, "ilev", length(ilev))
                 defDim(ds, "time", Inf)
                 for (varname, vardata, vardim, attrib) in [
-                    ("psi", reshape(Ψ, size(Ψ)..., 1), ("Ny", "ilev", "time"), Dict()),
+                    ("psi", Ψ, ("Ny", "ilev"), Dict()),
                     ("ilev", ilev, ("ilev",), Dict()),
                 ]
 

@@ -1,2 +1,0 @@
-
-function gen_names
