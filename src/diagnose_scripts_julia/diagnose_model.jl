@@ -243,6 +243,14 @@ for (diagcase_name, diagcase) in diagcases
     end
 
     if cfg["diagnose"]["ocn"]
+
+        if haskey(diagcase, "pop2") && diagcase["pop2"] == true
+            println("IMPORTANT: This ocean case is produced with POP2. Turn on --pop2 option")
+            pop2_option = true
+        else
+            pop2_option = false
+        end
+
         pleaseRun(`julia $(@__DIR__)/make_extra_data_ocn.jl
             --casename   $(casename)
             --input-dir  $(hist_dir_ocn)
@@ -250,15 +258,38 @@ for (diagcase_name, diagcase) in diagcases
             --year-rng   $(diag_beg_year) $(diag_end_year)
             --domain-file $(domain_ocn)
             --remap-file-nn $(cfg["remap-files"]["ocn2atm"]["nn"])
+            --pop2     $(pop2_option)
         `)
 
-        for varname in ["SST", "HMXL"]
+        #for varname in ["SST", "HMXL"]
+        for varname in ["SST",]
             output_file = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname).nc"
             output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
 
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
                      --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra1_rg."
+                     --data-file-timestamp-form YEAR_MONTH
+                     --domain-file $(domain_atm)
+                     --output-file $output_file
+                     --beg-year $diag_beg_year
+                     --end-year $diag_end_year
+                     --varname  $(varname)
+                     --dims     XYT
+                `; igs=true)
+
+                pleaseRun(`ncwa -h -O -a Nx $output_file $output_file_zm`; igs=true)
+            end
+
+        end
+ 
+        for varname in ["STRAT",]
+            output_file = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname).nc"
+            output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
+
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
+                     --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra2_rg."
                      --data-file-timestamp-form YEAR_MONTH
                      --domain-file $(domain_atm)
                      --output-file $output_file

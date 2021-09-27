@@ -18,10 +18,15 @@ atm = false
 ice = false
 ocn = true
 
-[diagcases.EMOM_CTL]
-    casename = "paper2021_EMOM_CTL"
-    year-rng = [ 2, 3 ]
-    
+#[diagcases.EMOM_CTL]
+#    casename = "paper2021_EMOM_CTL"
+#    year-rng = [ 2, 3 ]
+ 
+[diagcases.POP2_CTL]
+    casename = "paper2021_CTL_POP2"
+    year-rng = [ 31, 32 ]
+    pop2 = true
+   
 #[diagcases.MLM_CTL]
 #    casename = "paper2021_MLM_CTL"
 #    year-rng = [ 2, 4 ]
