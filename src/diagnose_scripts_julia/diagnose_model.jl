@@ -16,6 +16,14 @@ s = ArgParseSettings()
 
     "--diag-overwrite"
         action = :store_true
+
+    "--extra-overwrite"
+        action = :store_true
+
+
+    "--diagcase" 
+        arg_type = String
+        default = ""
  
 end
 
@@ -40,8 +48,16 @@ domain_atm = cfg["domains"]["atm"]
 domain_ocn = cfg["domains"]["ocn"]
 domain_ice = cfg["domains"]["ice"]
 
+if parsed["diagcase"] != ""
+    diagcases = Dict(
+        parsed["diagcase"] => cfg["diagcases"][parsed["diagcase"]]
+    )
+else
+    diagcases = cfg["diagcases"]
+end
 
-for (diagcase_name, diagcase) in cfg["diagcases"]
+
+for (diagcase_name, diagcase) in diagcases
 
     println("Diagcase detail: ")
     JSON.print(diagcase, 4)
@@ -54,6 +70,7 @@ for (diagcase_name, diagcase) in cfg["diagcases"]
 
     hist_dir_atm = joinpath(cfg["archive-root"], diagcase["casename"], "atm", "hist")
     hist_dir_ice = joinpath(cfg["archive-root"], diagcase["casename"], "ice", "hist")
+    hist_dir_ocn = joinpath(cfg["archive-root"], diagcase["casename"], "ocn", "hist")
 
     casename = diagcase["casename"]
     diag_beg_year, diag_end_year = diagcase["year-rng"]
@@ -168,6 +185,7 @@ for (diagcase_name, diagcase) in cfg["diagcases"]
     end
 
 
+
     if cfg["diagnose"]["ice"]
         pleaseRun(`julia $(@__DIR__)/make_extra_data_ice.jl
             --casename   $(casename)
@@ -178,7 +196,83 @@ for (diagcase_name, diagcase) in cfg["diagcases"]
             --remap-file-nn $(cfg["remap-files"]["ice2atm"]["nn"])
         `)
 
+        for varname in ["aice", "vice"]
+            output_file = "$(diagcase_data_dir)/ice_analysis_mean_anomaly_$(varname).nc"
+            output_file_zm = "$(diagcase_data_dir)/ice_analysis_mean_anomaly_$(varname)_zm.nc"
+
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
+                     --data-file-prefix "$(extra_data_dir)/$(casename).cice_extra2_rg."
+                     --data-file-timestamp-form YEAR_MONTH
+                     --domain-file $(domain_atm)
+                     --output-file $output_file
+                     --beg-year $diag_beg_year
+                     --end-year $diag_end_year
+                     --varname  $(varname)
+                     --dims     XYT
+                `)
+
+                pleaseRun(`ncwa -h -O -a Nx $output_file $output_file_zm`)
+            end
+
+        end
+ 
+        begin
+
+            output_file = "$(diagcase_data_dir)/ice_analysis_total_seaice.nc"
+
+            if !isfile(output_file) || parsed["diag-overwrite"]
+    
+                pleaseRun(`julia $(lib_dir)/seaice.jl
+                    --data-file-prefix $(extra_data_dir)/$(casename).cice_extra1.
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_ice)
+                    --output-file $(output_file)
+                     --beg-year $diag_beg_year
+                     --end-year $diag_end_year
+
+                `)
+#julia $script_analysis_dir/seaice.jl --data-file-prefix="$concat_dir/$casename.cice_extra.h." --data-file-timestamp-form=YEAR_MONTH --domain-file=$ocn_domain --output-file=$ice_analysis1 --beg-year=$diag_beg_year --end-year=$diag_end_year
+
+            end
+
+        end
+
 
 
     end
+
+    if cfg["diagnose"]["ocn"]
+        pleaseRun(`julia $(@__DIR__)/make_extra_data_ocn.jl
+            --casename   $(casename)
+            --input-dir  $(hist_dir_ocn)
+            --output-dir $(extra_data_dir)
+            --year-rng   $(diag_beg_year) $(diag_end_year)
+            --domain-file $(domain_ocn)
+            --remap-file-nn $(cfg["remap-files"]["ocn2atm"]["nn"])
+        `)
+
+        for varname in ["SST", "HMXL"]
+            output_file = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname).nc"
+            output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
+
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
+                     --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra1_rg."
+                     --data-file-timestamp-form YEAR_MONTH
+                     --domain-file $(domain_atm)
+                     --output-file $output_file
+                     --beg-year $diag_beg_year
+                     --end-year $diag_end_year
+                     --varname  $(varname)
+                     --dims     XYT
+                `; igs=true)
+
+                pleaseRun(`ncwa -h -O -a Nx $output_file $output_file_zm`; igs=true)
+            end
+
+        end
+ 
+    end
+
 end

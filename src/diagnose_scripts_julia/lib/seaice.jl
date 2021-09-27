@@ -71,6 +71,12 @@ Dataset(parsed["domain-file"], "r") do ds
 end
 
 function calAreaWeightedSum(v, idx)
+
+#    println("size(area): ", size(area))
+#    println("size(v): ", size(v))
+#    println("size(idx): ", size(idx))
+
+
     return sum( area[idx] .* v[idx] )
 end
 
@@ -82,6 +88,7 @@ end
 let
     global ice_volume_GLB, ice_volume_NH, ice_volume_SH
     global ice_area_GLB, ice_area_NH, ice_area_SH
+    global ice_extent_GLB, ice_extent_NH, ice_extent_SH
 
     if parsed["data-file-timestamp-form"] == "YEAR"
         filename_format = format("{:s}{{:04d}}.nc", joinpath(parsed["data-file-prefix"]))
@@ -98,6 +105,10 @@ let
  
     vice, aice = getData(fh, ["vice", "aice"], (parsed["beg-year"], parsed["end-year"]), (:, :))
 
+
+    aice_extent = zeros(Float64, size(aice)...)
+    aice_extent[aice .>= 0.15] .= 1.0
+
     ice_volume_GLB = calAreaWeightedSumTimeseries(vice, idx_GLB)
     ice_volume_NH  = calAreaWeightedSumTimeseries(vice, idx_NH)
     ice_volume_SH  = calAreaWeightedSumTimeseries(vice, idx_SH)
@@ -105,6 +116,11 @@ let
     ice_area_GLB = calAreaWeightedSumTimeseries(aice, idx_GLB)
     ice_area_NH  = calAreaWeightedSumTimeseries(aice, idx_NH)
     ice_area_SH  = calAreaWeightedSumTimeseries(aice, idx_SH)
+
+    ice_extent_GLB = calAreaWeightedSumTimeseries(aice_extent, idx_GLB)
+    ice_extent_NH  = calAreaWeightedSumTimeseries(aice_extent, idx_NH)
+    ice_extent_SH  = calAreaWeightedSumTimeseries(aice_extent, idx_SH)
+
 
 end
 
@@ -119,6 +135,9 @@ Dataset(parsed["output-file"], "c") do ds
         ("ice_area_GLB",   ice_area_GLB,   ("time",), Dict()),
         ("ice_area_NH",    ice_area_NH,    ("time",), Dict()),
         ("ice_area_SH",    ice_area_SH,    ("time",), Dict()),
+        ("ice_extent_GLB", ice_extent_GLB, ("time",), Dict()),
+        ("ice_extent_NH",  ice_extent_NH,  ("time",), Dict()),
+        ("ice_extent_SH",  ice_extent_SH,  ("time",), Dict()),
     ]
 
         println("Doing var: ", varname)

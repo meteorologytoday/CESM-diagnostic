@@ -3,16 +3,20 @@ archive-root = "/glade/u/home/tienyiao/scratch-tienyiao/archive"
 
 [domains]
 atm = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.lnd.fv0.9x1.25_gx1v6.090309.nc"
-ocn = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx3v7.120323.nc"
-ice = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx3v7.120323.nc"
+ocn = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx1v6.090206.nc"
+ice = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx1v6.090206.nc"
 
 [remap-files.ice2atm]
     nn = "/glade/u/home/tienyiao/paper2021/06_postprocessing/wgt_domain.ocn.gx1v6.090206_to_domain.lnd.fv0.9x1.25_gx1v6.090309/wgt.bilinear.nc"
 
+[remap-files.ocn2atm]
+    nn = "/glade/u/home/tienyiao/paper2021/06_postprocessing/wgt_domain.ocn.gx1v6.090206_to_domain.lnd.fv0.9x1.25_gx1v6.090309/wgt.bilinear.nc"
+
+
 [diagnose]
 atm = false
-ice = true
-ocn = false
+ice = false
+ocn = true
 
 [diagcases.EMOM_CTL]
     casename = "paper2021_EMOM_CTL"
