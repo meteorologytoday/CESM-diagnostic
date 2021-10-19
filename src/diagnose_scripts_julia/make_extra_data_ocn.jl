@@ -30,7 +30,7 @@ s = ArgParseSettings()
         required = true
 
     "--domain-file"
-        help = "Domain file of sea ice model"
+        help = "Domain file of ocean model"
         arg_type = String
         required = true
 
@@ -127,6 +127,22 @@ for y = parsed["year-rng"][1]:parsed["year-rng"][2], m=1:12
         
         println("Generating file: $(new_file4)")
         pleaseRun(`ncremap -R '--rgr lat_nm_in=Ny --rgr lon_nm_in=Nx' -m $(parsed["remap-file-nn"]) $new_file3 $new_file4`;igs=false)
+
+        
+    end
+    
+    # Ocean heat content 
+    new_file5 = joinpath(parsed["output-dir"], "$(parsed["casename"]).EMOM_extra3.$(date_str).nc")
+    if !isfile(new_file5) || parsed["overwrite"]
+        
+        println("Generating file: $(new_file5)")
+ 
+        if !parsed["pop2"]
+            pleaseRun(`ncwa -a N1 -v TEMP,SALT,area_sT $old_file $new_file5`)
+            pleaseRun(`ncwa -O -w area_sT -a Nx,Ny -v TEMP,SALT $new_file5 $new_file5`)
+        else
+            pleaseRun(`ncwa -w TAREA -a nlon,nlat -v TEMP,SALT $old_file $new_file5`)
+        end
 
         
     end

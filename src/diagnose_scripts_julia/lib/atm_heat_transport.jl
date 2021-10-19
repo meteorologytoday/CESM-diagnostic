@@ -14,7 +14,7 @@ using ArgParse
 using Statistics
 using JSON
 
-include("./lib/map_transform.jl")
+include("MapTransform.jl")
 include("constants.jl")
 include("CESMReader.jl")
 
@@ -180,7 +180,7 @@ let
 
     for y = 1:years
         AHT_AM[:, y] = mean(AHT[:, ((y-1)*12+1):(y*12)], dims=2)[:, 1]
-        ITCZ_lat[y] = findITCZ(AHT_AM[ITCZ_lat_idx, y], ITCZ_lat_bnd)
+#        ITCZ_lat[y] = findITCZ(AHT_AM[ITCZ_lat_idx, y], ITCZ_lat_bnd)
     end
 
 end
@@ -200,7 +200,7 @@ Dataset(parsed["output-file"], "c") do ds
         
 
         ("AHT_AM",           AHT_AM,                         ("lat_bnd", "year",), Dict()),
-        ("ITCZ_lat",         ITCZ_lat,                       ("year",), Dict()),
+#        ("ITCZ_lat",         ITCZ_lat,                       ("year",), Dict()),
         
         ("lat_bnd",          r.lat_bnd,                      ("lat_bnd",), Dict()),
     ]
