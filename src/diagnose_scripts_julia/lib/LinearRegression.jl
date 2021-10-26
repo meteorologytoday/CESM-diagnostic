@@ -1,4 +1,4 @@
-
+using Statistics
 
 function LinearRegression(
     x :: AbstractArray{T, 1},
@@ -58,4 +58,11 @@ function detrend(
 
     return result
 
+end
+
+function rmSeasonality!(a; period=12)
+    a_wrapped = reshape(a, period, :)
+    a_season = mean(a_wrapped, dims=2)
+
+    a_wrapped .-= a_season
 end

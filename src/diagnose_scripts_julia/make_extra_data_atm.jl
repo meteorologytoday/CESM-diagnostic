@@ -76,4 +76,17 @@ pleaseRun(`julia $(@__DIR__)/lib/streamfunction.jl
 `)
 
 
+#=
+println("Diagnose ENSO index") 
+pleaseRun(`julia $(@__DIR__)/lib/ENSO.jl 
+    --input-data-file-prefix $(parsed["output-dir"])/$(parsed["casename"]).cam.h0.
+    --output-data-file-prefix $(parsed["output-dir"])/$(parsed["casename"]).cam_extra4_ENSO.
+    --domain-file $(parsed["domain-file"])
+    --beg-year $(parsed["year-rng"][1])
+    --end-year $(parsed["year-rng"][2])
+    --SST-varname SST
+`)
+
+
+=#
 

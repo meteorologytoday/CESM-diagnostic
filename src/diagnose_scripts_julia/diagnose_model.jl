@@ -93,7 +93,67 @@ for (diagcase_name, diagcase) in diagcases
 
 
         if ! parsed["convert-only"]
-
+            
+            output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                    --SST-varname SST
+                    --dims XYT
+                    --sparsity 1
+                `)
+            end 
+            
+            output_file = "$(diagcase_data_dir)/atm_analysis_AO.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/EOFs/AO.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                    --SLP-varname PSL
+                    --dims XYT
+                    --sparsity 3
+                `)
+            end 
+            
+            output_file = "$(diagcase_data_dir)/atm_analysis_AAO.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/EOFs/AAO.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                    --SLP-varname PSL
+                    --dims XYT
+                    --sparsity 3
+                `)
+            end 
+ 
+            output_file = "$(diagcase_data_dir)/atm_analysis_NAO.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/EOFs/NAO.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                    --SLP-varname PSL
+                    --dims XYT
+                    --sparsity 1
+                `)
+            end 
+            
             output_file = "$(diagcase_data_dir)/atm_analysis_AHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/atm_heat_transport.jl
