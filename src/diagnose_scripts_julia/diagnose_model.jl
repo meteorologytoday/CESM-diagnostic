@@ -94,6 +94,19 @@ for (diagcase_name, diagcase) in diagcases
 
         if ! parsed["convert-only"]
             
+            output_file = "$(diagcase_data_dir)/atm_analysis_AHT_OHT.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/atmocn_heat_transport.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                `)
+            end 
+
+#=
             output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
@@ -154,9 +167,9 @@ for (diagcase_name, diagcase) in diagcases
                 `)
             end 
             
-            output_file = "$(diagcase_data_dir)/atm_analysis_AHT.nc"
+            output_file = "$(diagcase_data_dir)/atm_analysis_AHT_OHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/atm_heat_transport.jl
+                pleaseRun(`julia $(lib_dir)/atmocn_heat_transport.jl
                     --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
@@ -248,7 +261,7 @@ for (diagcase_name, diagcase) in diagcases
 
     # Downstream data. No need to specify --beg-year --end-year
     #julia $script_analysis_dir/AO.jl --data-file=$atm_analysis1 --domain-file=$atm_domain --output-file=$atm_analysis5 --sparsity=$PCA_sparsity
-
+            =#
         end
 
     end
@@ -334,6 +347,20 @@ for (diagcase_name, diagcase) in diagcases
 
         if ! parsed["convert-only"]
             #for varname in ["SST", "HMXL"]
+
+            output_file = "$(diagcase_data_dir)/ocn_analysis_OHT.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/ocn_heat_transport.jl
+                     --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra4_OHT."
+                     --data-file-timestamp-form YEAR_MONTH
+                     --domain-file $(domain_ocn)
+                     --output-file $output_file
+                     --beg-year $diag_beg_year
+                     --end-year $diag_end_year
+                `)
+            end
+
+#=
             for varname in ["SST",]
                 output_file = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname).nc"
                 output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
@@ -375,6 +402,7 @@ for (diagcase_name, diagcase) in diagcases
                 end
 
             end
+            =#
         end     
     end
 
