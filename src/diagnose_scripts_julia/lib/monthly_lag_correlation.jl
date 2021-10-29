@@ -59,8 +59,7 @@ function parse_commandline()
 
         "--output-monthly-anomalies"
             help = "Whether to output the monthly anomalies for all months."
-            arg_type = Bool
-            default = false
+            action = :store_true 
 
         "--dims"
             help = "The form of dimensions. Now can be `XYZT`, `XYT`, `YZT`"        
