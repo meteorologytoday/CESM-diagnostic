@@ -153,6 +153,8 @@ Dataset(parsed["output-file"], "c") do ds
     defDim(ds, "lat_bnd", length(r.lat_bnd))
     defDim(ds, "lat",     length(r.lat_bnd)-1)
 
+    ds["ocean_area"] = sum_valid_area
+
     for (varname, vardata, vardim, attrib) in [
         ("ADVT",    ADVT,        ("lat", "time"), Dict()),
         ("WKRSTT",   WKRSTT,       ("lat", "time"), Dict()),

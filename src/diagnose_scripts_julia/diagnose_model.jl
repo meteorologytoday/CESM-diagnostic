@@ -107,6 +107,22 @@ for (diagcase_name, diagcase) in diagcases
             end 
 
 #=
+            output_file = "$(diagcase_data_dir)/atm_analysis_PDO.nc"
+            if !isfile(output_file) || parsed["diag-overwrite"]
+                pleaseRun(`julia $(lib_dir)/EOFs/PDO.jl
+                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    --data-file-timestamp-form YEAR_MONTH
+                    --domain-file $(domain_atm)
+                    --output-file $output_file
+                    --beg-year $diag_beg_year
+                    --end-year $diag_end_year
+                    --SST-varname SST
+                    --dims XYT
+                    --sparsity 1
+                `)
+            end 
+ 
+
             output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
@@ -234,7 +250,7 @@ for (diagcase_name, diagcase) in diagcases
                 end
             end
 
-            for varname in ["TREFHT", "SST", "TAUX", "PSL", "ICEFRAC", "LHFLX", "SHFLX", "SWCF", "LWCF"]
+            for varname in ["TREFHT", "SST", "TAUX", "PSL", "ICEFRAC", "LHFLX", "SHFLX", "SWCF", "LWCF", "FSNT", "FLNT"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname).nc"
                 output_file_zm = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname)_zm.nc"
 

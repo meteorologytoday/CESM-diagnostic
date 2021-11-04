@@ -43,10 +43,10 @@ function parse_commandline()
             arg_type = String
             required = true
  
-        "--SLP-varname"
-            help = "Variable name of sea-level pressure"
+        "--SST-varname"
+            help = "Variable name of SST"
             arg_type = String
-            default = "PSL"
+            default = "SST"
 
         "--beg-year"
             help = "Year of begin."
@@ -96,11 +96,8 @@ Dataset(parsed["domain-file"], "r") do ds
         end
     end
 
-    # https://climatedataguide.ucar.edu/climate-data/hurrell-north-atlantic-oscillation-nao-index-pc-based
-    # "... leading Empirical Orthogonal Function (EOF) of SLP
-    #  anomalies over the Atlantic sector, 20°-80°N, 90°W-40°E."
-
-    global EOF_valid_pts  = (sparsity_mask .== 1) .& ( 20 .<= lat .<= 80 ) .& (( 270 .<= lon .<= 360) .| (0 .<= lon .<= 40.0))
+        
+    global EOF_idx  = (sparsity_mask .== 1) .& (mask .== 0) .& ( 20.0 .<= lat .<= 65.0 ) .& ( 115.0 .<= lon .<= 255.0 )
 
 end
 
@@ -118,22 +115,23 @@ let
     beg_t = (parsed["beg-year"] - 1) * 12 + 1
     end_t = (parsed["end-year"] - 1) * 12 + 12
  
-    global SLP = getData(fh, parsed["SLP-varname"], (parsed["beg-year"], parsed["end-year"]), (:, :))
+    global SST = getData(fh, "SST", (parsed["beg-year"], parsed["end-year"]), (:, :))
     
     global Nt = end_t - beg_t + 1
 end
 
 
 modes = 4
-PCAs, PCAs_ts = PCA.findPCAs(SLP, EOF_valid_pts; modes=modes)
+PCAs, PCAs_ts = PCA.findPCAs(SST, EOF_idx; modes=modes)
 
 Dataset(parsed["output-file"], "c") do ds
-    
+
     defDim(ds, "Nx", Nx)
     defDim(ds, "Ny", Ny)
     defDim(ds, "time", Inf)
     defDim(ds, "modes", modes)
-    
+
+
     for (varname, vardata, vardim, attrib) in [
         ("PCAs",  reshape(PCAs, Nx, Ny, modes), ("Nx", "Ny", "modes",), Dict()),
         ("PCAs_ts",  PCAs_ts, ("modes", "time",), Dict()),
