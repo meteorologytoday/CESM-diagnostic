@@ -171,6 +171,7 @@ Dataset(parsed["output-file"], "c") do ds
         ("OHT_MEAN",        mean(OHT, dims=2)[:, 1],       ("lat_bnd",), Dict()),
 
         ("lat_bnd",          r.lat_bnd,                      ("lat_bnd",), Dict()),
+        ("area",             r.∂a,                           ("lat",), Dict()),
     ]
 
         println("Doing var: ", varname)
