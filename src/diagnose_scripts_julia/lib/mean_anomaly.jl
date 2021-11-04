@@ -204,7 +204,7 @@ if parsed["dims"] == "XYZT"
             d = view(data, i, j, :)
             doit!(months,           d, data_MM, data_MA, data_MAVAR, data_MASTD, nyears, 12, i, j, k)    
             
-            seasonal_d = mean(reshape( circshift(d, -2), 3, :), dims=1)[1, :]
+            seasonal_d = mean(reshape( circshift(d, -2), 3, :), dims=1)[1, :] # spring, summer, autumn, winter
             doit!(seasons, seasonal_d, data_SM, data_SA, data_SAVAR, data_SASTD, nyears,  4, i, j, k)
  
             annual_d = mean(reshape( d, 12, :), dims=1)[1, :]
