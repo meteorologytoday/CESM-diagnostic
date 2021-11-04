@@ -94,9 +94,9 @@ for (diagcase_name, diagcase) in diagcases
 
         if ! parsed["convert-only"]
             
-            output_file = "$(diagcase_data_dir)/atm_analysis_AHT_OHT.nc"
+            output_file = "$(diagcase_data_dir)/atm_analysis_AHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/atmocn_heat_transport.jl
+                pleaseRun(`julia $(lib_dir)/atm_heat_transport.jl
                     --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)

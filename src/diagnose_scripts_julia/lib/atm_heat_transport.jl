@@ -150,10 +150,6 @@ let
     FSNT, FLNT, FSNS, FLNS, SHFLX, LHFLX, PRECSC, PRECSL = getData(fh, ["FSNT", "FLNT", "FSNS", "FLNS", "SHFLX", "LHFLX", "PRECSC", "PRECSL"], (parsed["beg-year"], parsed["end-year"]), (:, :))
     
     # FLX converted to (+) => upward, (-) => downward
-    FFLX_TOA = ( - mean(FSNT, dims=(3, ))  + mean(FLNT,  dims=(3, )) )[:, :, 1]
-    FFLX_SFC = ( - mean(FSNS, dims=(3, ))  + mean(FLNS,  dims=(3, )) )[:, :, 1]
-    HFLX_SFC = (   mean(SHFLX, dims=(3, )) + mean(LHFLX, dims=(3, )) )[:, :, 1]
-    PRECS    = (   mean(PRECSC, dims=(3, )) + mean(PRECSL, dims=(3, )) )[:, :, 1]
 
     FFLX_TOA = ( - FSNT + FLNT )
     FFLX_SFC = ( - FSNS + FLNS )
@@ -165,13 +161,18 @@ let
 
     Nt = end_t - beg_t + 1
 
-    global TFLX_CONV = zeros(Float64, length(r.lat_bnd)-1, Nt)
-    global AHT       = zeros(Float64, length(r.lat_bnd), Nt)
+    global NetRad_TOA = zeros(Float64, length(r.lat_bnd)-1, Nt)
+    global TFLX_CONV  = zeros(Float64, length(r.lat_bnd)-1, Nt)
+    global AHT        = zeros(Float64, length(r.lat_bnd), Nt)
+
 
     for t = 1:Nt
         v = view(_data, :, :, t)
         TFLX_CONV[:, t] = MapTransform.transform(r, v) 
         AHT[:, t]       = MapTransform.∫∂a(r, v)
+       
+        v2 = view(FFLX_TOA, :, :, t) 
+        NetRad_TOA[:, t] = MapTransform.transform(r, v2) 
     end
 
     global years = Int(Nt/12)
@@ -193,6 +194,7 @@ Dataset(parsed["output-file"], "c") do ds
     defDim(ds, "lat",     length(r.lat_bnd)-1)
 
     for (varname, vardata, vardim, attrib) in [
+        ("NetRad_TOA",  NetRad_TOA,                          ("lat", "time"), Dict()),
         ("TFLX_CONV",   TFLX_CONV,                           ("lat", "time"), Dict()),
         ("AHT",        AHT,                                  ("lat_bnd", "time"), Dict()),
         ("TFLX_CONV_MEAN",   mean(TFLX_CONV, dims=2)[:, 1],  ("lat",), Dict()),
@@ -203,6 +205,7 @@ Dataset(parsed["output-file"], "c") do ds
 #        ("ITCZ_lat",         ITCZ_lat,                       ("year",), Dict()),
         
         ("lat_bnd",          r.lat_bnd,                      ("lat_bnd",), Dict()),
+        ("area",             r.∂a,                           ("lat",), Dict()),
     ]
 
         println("Doing var: ", varname)

@@ -154,11 +154,12 @@ for y = parsed["year-rng"][1]:parsed["year-rng"][2], m=1:12
         println("Generating file: $(new_file6)")
  
         if !parsed["pop2"]
-            pleaseRun(`ncwa -a N1 -v ADVT,ADVS,WKRSTT,WKRSTS,Q_LOST,dz_cT $old_file $new_file6`)
-            pleaseRun(`ncwa -O -y ttl -w dz_cT -a Nz -v ADVT,ADVS,WKRSTT,WKRSTS,Q_LOST $new_file6 $new_file6`)
-            pleaseRun(`ncap2 -O -s 'SHF=ADVT+WKRSTT;' $new_file6 $new_file6`)
+            pleaseRun(`ncwa -a N1 -v ADVT,ADVS,WKRSTT,WKRSTS,Q_LOST,TEMP,SALT,dz_cT $old_file $new_file6`)
+            pleaseRun(`ncwa -O -y ttl -w dz_cT -a Nz -v ADVT,ADVS,WKRSTT,WKRSTS,Q_LOST,TEMP,SALT $new_file6 $new_file6`)
+#            pleaseRun(`ncap2 -O -s 'SHF=ADVT+WKRSTT;' $new_file6 $new_file6`)
         else
-            pleaseRun(`ncks -v SHF,N_HEAT $old_file $new_file6`)
+            pleaseRun(`ncwa -O -y ttl -w dz -a z_t -v TEMP,SALT $old_file $new_file6`)
+            pleaseRun(`ncks -A -v SHF,N_HEAT $old_file $new_file6`)
         end
 
         
