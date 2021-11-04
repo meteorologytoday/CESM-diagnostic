@@ -59,8 +59,7 @@ function parse_commandline()
 
         "--output-monthly-anomalies"
             help = "Whether to output the monthly anomalies for all months."
-            arg_type = Bool
-            default = false
+            action = :store_true 
 
         "--dims"
             help = "The form of dimensions. Now can be `XYZT`, `XYT`, `YZT`"        
@@ -205,7 +204,7 @@ if parsed["dims"] == "XYZT"
             d = view(data, i, j, :)
             doit!(months,           d, data_MM, data_MA, data_MAVAR, data_MASTD, nyears, 12, i, j, k)    
             
-            seasonal_d = mean(reshape( circshift(d, -2), 3, :), dims=1)[1, :] # spring, summer, autumn, winter
+            seasonal_d = mean(reshape( circshift(d, -2), 3, :), dims=1)[1, :]
             doit!(seasons, seasonal_d, data_SM, data_SA, data_SAVAR, data_SASTD, nyears,  4, i, j, k)
  
             annual_d = mean(reshape( d, 12, :), dims=1)[1, :]
