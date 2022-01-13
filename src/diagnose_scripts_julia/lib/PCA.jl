@@ -5,11 +5,12 @@ module PCA
 
     function helper_findPCAs(
         X    :: AbstractArray{T, 2};
-        num  :: Integer = 1,
-        modes :: Integer = 2,
+        num  :: Integer = 1,  # number of eignevectors wish to return
     ) where T <: AbstractFloat
 
 
+        # dim means the spatial dimension of X
+        # N means the number of sampling (time, for example)
         dim, N = size(X)
 
 
@@ -89,7 +90,7 @@ module PCA
         end
 
         # Project anomalies onto PCAs
-        PCAs_ts = (transpose(eigen_vectors) * EOF_input) / N   # dimension = (modes, Nt)
+        PCAs_ts = (transpose(eigen_vectors) * EOF_input) # dimension = (modes, Nt)
 #        for m = 1:modes
 #            PCAs_ts[m, :] ./= std(view(PCAs_ts, m, :))
 #        end

@@ -106,7 +106,7 @@ for (diagcase_name, diagcase) in diagcases
                 `)
             end 
 
-#=
+
             output_file = "$(diagcase_data_dir)/atm_analysis_PDO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/PDO.jl
@@ -122,7 +122,7 @@ for (diagcase_name, diagcase) in diagcases
                 `)
             end 
  
-
+#=
             output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
@@ -137,7 +137,6 @@ for (diagcase_name, diagcase) in diagcases
                     --sparsity 1
                 `)
             end 
-            
             output_file = "$(diagcase_data_dir)/atm_analysis_AO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/AO.jl
@@ -182,7 +181,7 @@ for (diagcase_name, diagcase) in diagcases
                     --sparsity 1
                 `)
             end 
-  =#          
+
             output_file = "$(diagcase_data_dir)/atm_analysis_AHT_OHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/atmocn_heat_transport.jl
@@ -194,11 +193,12 @@ for (diagcase_name, diagcase) in diagcases
                     --end-year $diag_end_year
                 `)
             end 
+  =#          
 
 
             # Meridional averaged varables
             #for varname in ["U", "T", "VU", "VT", "VQ"]
-            for varname in ["U", "T"]
+            for varname in ["U", "T", "Z3"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname)_zm.nc"
                 if !isfile(output_file) || parsed["diag-overwrite"]
                     pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
@@ -250,11 +250,11 @@ for (diagcase_name, diagcase) in diagcases
                 end
             end
 
-            for varname in ["TREFHT", "SST", "TAUX", "PSL", "ICEFRAC", "LHFLX", "SHFLX", "SWCF", "LWCF", "FSNT", "FLNT"]
+            for varname in ["TREFHT", "SST", "TAUX", "TAUY", "PSL", "ICEFRAC", "LHFLX", "SHFLX", "SWCF", "LWCF", "FSNT", "FLNT"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname).nc"
                 output_file_zm = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname)_zm.nc"
 
-                if varname == "SST"
+                if varname in ["SST", "PSL", "TREFHT"]
                     output_monthly_anomalies = true
                 else
                     output_monthly_anomalies = false

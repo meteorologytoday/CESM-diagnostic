@@ -60,7 +60,7 @@ for y = parsed["year-rng"][1]:parsed["year-rng"][2], m=1:12
     new_file2 = joinpath(parsed["output-dir"], "$(parsed["casename"]).cam_extra2_zmean.$(date_str).nc")
     if !isfile(new_file2) || parsed["overwrite"]
         println("Generating file: $(new_file2)")
-        pleaseRun(`ncwa -O -a lon -v T,U,V,ilev $old_file $new_file2`)
+        pleaseRun(`ncwa -O -a lon -v T,U,V,Z3,ilev $old_file $new_file2`)
     end
 
 end

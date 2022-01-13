@@ -1,42 +1,21 @@
-#=
-
-Calculation of atmoshpere heat transport is not simple. Detail must be careful.
-The standard version I found is here:
-    http://www.atmos.albany.edu/facstaff/brose/classes/ATM623_Spring2015/Notes/Lectures/Lecture13%20--%20Heat%20transport.html
-
-In particular, snow flux is not part of latent heat flux so must be added separately.
-
-=#
-
 using NCDatasets
 using Formatting
 using ArgParse
 using Statistics
 using JSON
 
-include("MapTransform.jl")
-include("constants.jl")
-include("CESMReader.jl")
-
-using .CESMReader
-using .MapTransform
-
-function mreplace(x)
-    return replace(x, missing=>NaN)
-end
-
 function parse_commandline()
 
     s = ArgParseSettings()
     @add_arg_table s begin
  
-        "--data-file-prefix"
-            help = "Data filename prefix including folder and path until the timestamp. File extension `nc` is assumed."
+        "--input-file-ENSO"
+            help = "Input file ENSO"
             arg_type = String
             required = true
  
-        "--data-file-timestamp-form"
-            help = "Data filename timestamp form. Either `YEAR` or `YEAR_MONTH`."
+        "--input-file"
+            help = "The file containing data user want to remove ENSO"
             arg_type = String
             required = true
 
