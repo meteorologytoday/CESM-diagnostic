@@ -36,7 +36,12 @@ module CESMReader2
 
             current_t = (y-1) * 12 + (m-1) - beg_t + 1
             filename = format(filename_format, y, m)
-            f(filename, y, m)            
+            if_continue = f(filename, y, m)
+
+            if if_continue == false
+                println("Break the iteration.")
+                break
+            end
         end            
     
         

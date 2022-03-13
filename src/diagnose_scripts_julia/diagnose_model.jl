@@ -195,7 +195,20 @@ for (diagcase_name, diagcase) in diagcases
             end 
   =#          
 
-
+            # 3-dimensional fields
+            for varname in ["U", "T", "ICEFRAC"]
+                output_file = "$(diagcase_data_dir)/atm_analysis_mean_var_$(varname).nc"
+                if !isfile(output_file) || parsed["diag-overwrite"]
+                    pleaseRun(`julia $(lib_dir)/mean_var.jl
+                         --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                         --output-file $output_file
+                         --beg-year $diag_beg_year
+                         --end-year $diag_end_year
+                         --varname  $(varname)
+                    `)
+                end
+            end
+ 
             # Meridional averaged varables
             #for varname in ["U", "T", "VU", "VT", "VQ"]
             for varname in ["U", "T", "Z3"]
