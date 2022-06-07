@@ -49,6 +49,11 @@ function parse_commandline()
             arg_type = Int64
             required = true
 
+        "--raw"
+            help = "If set, then aice and vice will be computed from the data. I.e. summing from cat 1 to cat 5"
+            action = :store_true
+
+
     end
 
     return parse_args(ARGS, s)
@@ -103,8 +108,23 @@ let
     beg_t = (parsed["beg-year"] - 1) * 12 + 1
     end_t = (parsed["end-year"] - 1) * 12 + 12
  
-    vice, aice = getData(fh, ["vice", "aice"], (parsed["beg-year"], parsed["end-year"]), (:, :))
+    if parsed["raw"]
 
+        varnames = []
+        for v in ["vice", "aice"]
+            for k = 1:5
+                push!(varnames, format("{:s}n{:03d}", v, k))
+            end
+        end
+
+        vice1, vice2, vice3, vice4, vice5, aice1, aice2, aice3, aice4, aice5 = getData(fh, varnames, (parsed["beg-year"], parsed["end-year"]), (:, :))
+
+        vice = vice1 + vice2 + vice3 + vice4 + vice5
+        aice = aice1 + aice2 + aice3 + aice4 + aice5
+
+    else
+        vice, aice = getData(fh, ["vice", "aice"], (parsed["beg-year"], parsed["end-year"]), (:, :))
+    end
 
     aice_extent = zeros(Float64, size(aice)...)
     aice_extent[aice .>= 0.15] .= 1.0
