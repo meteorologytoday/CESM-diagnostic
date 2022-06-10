@@ -1,0 +1,37 @@
+diag-label = "CTL_21-120"
+archive-root = "/glade/u/home/tienyiao/scratch-tienyiao/archive"
+
+[domains]
+atm = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.lnd.fv0.9x1.25_gx1v6.090309.nc"
+ocn = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx1v6.090206.nc"
+ice = "/glade/u/home/tienyiao/work-tienyiao/CESM_domains/domain.ocn.gx1v6.090206.nc"
+
+[remap-files.ice2atm]
+    nn = "/glade/u/home/tienyiao/paper2021/06_postprocessing/wgt_domain.ocn.gx1v6.090206_to_domain.lnd.fv0.9x1.25_gx1v6.090309/wgt.bilinear.nc"
+
+[remap-files.ocn2atm]
+    nn = "/glade/u/home/tienyiao/paper2021/06_postprocessing/wgt_domain.ocn.gx1v6.090206_to_domain.lnd.fv0.9x1.25_gx1v6.090309/wgt.bilinear.nc"
+
+
+[diagnose]
+atm = true
+ice = true
+ocn = true
+
+
+[diagcases.qco2_EMOM]
+    casename = "qco2_EMOM"
+    year-rng = [ 201, 205 ]
+ 
+[diagcases.qco2_MLM]
+    casename = "qco2_MLM"
+    year-rng = [ 201, 205 ]
+ 
+[diagcases.qco2_SOM]
+    casename = "qco2_SOM"
+    year-rng = [ 201, 205 ]
+ 
+[diagcases.qco2_POP2]
+    casename = "qco2_POP2"
+    year-rng = [ 1, 5 ]
+    pop2 = true 

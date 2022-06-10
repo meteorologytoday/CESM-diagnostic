@@ -1,0 +1,10 @@
+[atm_diag] 
+AHT      = true
+AHT_OHT  = true
+EOF_PDO  = true
+EOF_ENSO = true
+EOF_AO   = true
+EOF_AAO  = true
+MEAN_ANOM_3D  = ["U", "T", "ICEFRAC"]
+ZMEAN_ANOM_3D = ["U", "T", "Z3"]
+MEAN_ANOM_2D  = ["TREFHT", "SST", "TAUX", "TAUY", "PSL", "ICEFRAC", "LHFLX", "SHFLX", "SWCF", "LWCF", "FSNT", "FLNT", "PREC_TOTAL"]

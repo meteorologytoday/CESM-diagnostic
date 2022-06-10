@@ -15,11 +15,16 @@ s = ArgParseSettings()
         arg_type = String
         default = ""
 
-
     "--diag-file"
         help = "The TOML file containing the information to diagnose."
         arg_type = String
         default = ""
+
+    "--diag-opts"
+        help = "The TOML file containing optional diagnostics."
+        arg_type = String
+        default = ""
+
 
     "--diag-overwrite"
         action = :store_true

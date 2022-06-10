@@ -1,0 +1,7 @@
+atm-PRECIP = ""
+atm-HEAT_TRANSPORT = ""
+atm-MAP_MEANANOM = "SST,PRECC"
+
+ocn-REGRID = ""
+ocn-MAP_MEANANOM = "HMXL,SST"
+XXX = ""

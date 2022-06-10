@@ -6,6 +6,7 @@ using TOML
 
 include("runCmd.jl")
 include("tools.jl")
+include("diag_entries.jl")
 
 s = ArgParseSettings()
 @add_arg_table s begin
@@ -15,9 +16,13 @@ s = ArgParseSettings()
         arg_type = String
         default = ""
 
-
     "--diag-file"
         help = "The TOML file containing the information to diagnose."
+        arg_type = String
+        default = ""
+
+    "--diag-opts"
+        help = "The TOML file containing optional diagnostics."
         arg_type = String
         default = ""
 
@@ -33,7 +38,13 @@ s = ArgParseSettings()
         default = ""
 
     "--convert-only"
-        action = :store_true 
+        action = :store_true
+
+
+    "--debug"
+        help = "If set, then I will only print the commands instead of running them."
+        action = :store_true
+ 
 end
 
 parsed = DataStructures.OrderedDict(parse_args(ARGS, s))
@@ -51,12 +62,8 @@ diag_data_dir = joinpath(result_dir, cfg["diag-label"])
 mkpath(result_dir)
 mkpath(diag_data_dir)
 
-lib_dir=joinpath(@__DIR__, "lib")
-    
-domain_atm = cfg["domains"]["atm"] 
-domain_ocn = cfg["domains"]["ocn"]
-domain_ice = cfg["domains"]["ice"]
 
+    
 if parsed["diagcase"] != ""
     diagcases = Dict(
         parsed["diagcase"] => cfg["diagcases"][parsed["diagcase"]]
@@ -71,57 +78,125 @@ for (diagcase_name, diagcase) in diagcases
     println("Diagcase detail: ")
     JSON.print(diagcase, 4)
 
-    extra_data_dir = joinpath(result_dir, "extra_data", diagcase["casename"])
-    diagcase_data_dir = joinpath(diag_data_dir, diagcase_name)
+    case_cfg = Dict()
 
-    mkpath(extra_data_dir)
-    mkpath(diagcase_data_dir)
+    case_cfg["lib_dir"] = lib_dir=joinpath(@__DIR__, "lib")
+    case_cfg["extra_data_dir"]    = joinpath(result_dir, "extra_data", diagcase["casename"])
+    case_cfg["diagcase_data_dir"] = joinpath(diag_data_dir, diagcase_name)
 
-    hist_dir_atm = joinpath(cfg["archive-root"], diagcase["casename"], "atm", "hist")
-    hist_dir_ice = joinpath(cfg["archive-root"], diagcase["casename"], "ice", "hist")
-    hist_dir_ocn = joinpath(cfg["archive-root"], diagcase["casename"], "ocn", "hist")
+    mkpath(case_cfg["extra_data_dir"])
+    mkpath(case_cfg["diagcase_data_dir"])
 
-    casename = diagcase["casename"]
-    diag_beg_year, diag_end_year = diagcase["year-rng"]
+    case_cfg["hist_dir_atm"] = joinpath(cfg["archive-root"], diagcase["casename"], "atm", "hist")
+    case_cfg["hist_dir_ocn"] = joinpath(cfg["archive-root"], diagcase["casename"], "ocn", "hist")
+    case_cfg["hist_dir_ice"] = joinpath(cfg["archive-root"], diagcase["casename"], "ice", "hist")
 
+    case_cfg["domain_atm"] = cfg["domains"]["atm"]
+    case_cfg["domain_ocn"] = cfg["domains"]["ocn"]
+    case_cfg["domain_ice"] = cfg["domains"]["ice"]
+
+
+    case_cfg["casename"] = diagcase["casename"]
+    case_cfg["diag_beg_year"] = diagcase["year-rng"][1]
+    case_cfg["diag_end_year"] = diagcase["year-rng"][2]
+            
+    case_cfg["remap-file-nn-ocn2atm"] = cfg["remap-files"]["ocn2atm"]["nn"]
+    case_cfg["remap-file-nn-ice2atm"] = cfg["remap-files"]["ice2atm"]["nn"]
+                
+    if haskey(diagcase, "pop2") && diagcase["pop2"] == true
+        case_cfg["pop2"] = true
+    else
+        case_cfg["pop2"] = false
+    end
+    
+    diags = TOML.parsefile(parsed["diag-opts"])
+
+    println("We are performing the following diags:")
+    for (i, label) in enumerate(keys(diags))
+        println(" ($i) $label with param: ", diags[label])
+    end
+
+    for (label, params) in diags
+
+        _params = split(params, ",")
+        
+        if haskey(diag_entries, label)
+            diag_entry = diag_entries[label]
+            if cfg["diagnose"][diag_entry.field] == true
+
+                println("Doing diagnose: ", diag_entry.label)
+
+                
+                output_files = [ ]
+                _tmp = diag_entry.output(case_cfg, _params)
+
+                if typeof(_tmp) == String 
+                    push!(output_files, _tmp)
+                elseif typeof(_tmp) <: AbstractArray    
+                    append!(output_files, _tmp)
+                end
+
+                if_diag = ! all( isfile.(output_files) )
+
+                if if_diag
+                    println("[$label] Output missing. Start diagnose")
+                    cmds = diag_entry.func(case_cfg, _params)
+
+                    if typeof(cmds) <: AbstractArray
+                        for (i, cmd) in enumerate(cmds)
+                            println("($i) ", cmd)
+                        end
+                    else
+                        println(cmds)
+                    end
+                else
+                    println("[$label] Output already exists. Skip.")
+                end 
+            end
+        else
+            println("Error: The label `$label` is not supported. Skip this one.")
+        end  
+    end
 
     if cfg["diagnose"]["atm"]
         
         println("Diagnosing atm...")
-    
+   
+        #= 
         pleaseRun(`julia $(@__DIR__)/make_extra_data_atm.jl
-            --casename   $(casename)
-            --input-dir  $(hist_dir_atm)
+            --casename   $(cfg["casename"])
+            --input-dir  $(cfg["hist_dir_atm"])
             --output-dir $(extra_data_dir)
             --year-rng   $(diag_beg_year) $(diag_end_year)
             --domain-file $(domain_atm)
         `)
+        =#
 
-
+#=
         if ! parsed["convert-only"]
             
             output_file = "$(diagcase_data_dir)/atm_analysis_AHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/atm_heat_transport.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/atm_heat_transport.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                 `)
             end 
 
 
             output_file = "$(diagcase_data_dir)/atm_analysis_PDO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/EOFs/PDO.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/EOFs/PDO.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                     --SST-varname SST
                     --dims XYT
                     --sparsity 1
@@ -131,13 +206,13 @@ for (diagcase_name, diagcase) in diagcases
 #=
             output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/EOFs/ENSO.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                     --SST-varname SST
                     --dims XYT
                     --sparsity 1
@@ -145,13 +220,13 @@ for (diagcase_name, diagcase) in diagcases
             end 
             output_file = "$(diagcase_data_dir)/atm_analysis_AO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/EOFs/AO.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/EOFs/AO.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                     --SLP-varname PSL
                     --dims XYT
                     --sparsity 3
@@ -160,13 +235,13 @@ for (diagcase_name, diagcase) in diagcases
             
             output_file = "$(diagcase_data_dir)/atm_analysis_AAO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/EOFs/AAO.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/EOFs/AAO.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                     --SLP-varname PSL
                     --dims XYT
                     --sparsity 3
@@ -175,13 +250,13 @@ for (diagcase_name, diagcase) in diagcases
  
             output_file = "$(diagcase_data_dir)/atm_analysis_NAO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/EOFs/NAO.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/EOFs/NAO.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                     --SLP-varname PSL
                     --dims XYT
                     --sparsity 1
@@ -190,13 +265,13 @@ for (diagcase_name, diagcase) in diagcases
 
             output_file = "$(diagcase_data_dir)/atm_analysis_AHT_OHT.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/atmocn_heat_transport.jl
-                    --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                pleaseRun(`julia $(cfg["lib_dir"])/atmocn_heat_transport.jl
+                    --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                     --data-file-timestamp-form YEAR_MONTH
                     --domain-file $(domain_atm)
                     --output-file $output_file
-                    --beg-year $diag_beg_year
-                    --end-year $diag_end_year
+                    --beg-year $(cfg["diag_beg_year"])
+                    --end-year $(cfg["diag_end_year"])
                 `)
             end 
   =#          
@@ -205,11 +280,11 @@ for (diagcase_name, diagcase) in diagcases
             for varname in ["U", "T", "ICEFRAC"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_var_$(varname).nc"
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_var.jl
-                         --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_var.jl
+                         --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                     `)
                 end
@@ -220,13 +295,13 @@ for (diagcase_name, diagcase) in diagcases
             for varname in ["U", "T", "Z3"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname)_zm.nc"
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).cam_extra2_zmean."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).cam_extra2_zmean."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     YZT
                     `)
@@ -236,13 +311,13 @@ for (diagcase_name, diagcase) in diagcases
                 
             if !isfile(output_file) || parsed["diag-overwrite"]
                 output_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_streamfunction.nc"
-                pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                     --data-file-prefix "$(extra_data_dir)/$(casename).cam_extra3_streamfunction."
+                pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                     --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).cam_extra3_streamfunction."
                      --data-file-timestamp-form YEAR_MONTH
                      --domain-file $(domain_atm)
                      --output-file $output_file
-                     --beg-year $diag_beg_year
-                     --end-year $diag_end_year
+                     --beg-year $(cfg["diag_beg_year"])
+                     --end-year $(cfg["diag_end_year"])
                      --varname  psi
                      --dims     YZ
                 `)
@@ -254,13 +329,13 @@ for (diagcase_name, diagcase) in diagcases
                 output_file_zm = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_$(varname)_zm.nc"
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).cam_extra1."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).cam_extra1."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     XYT
                     `)
@@ -280,13 +355,13 @@ for (diagcase_name, diagcase) in diagcases
                 end
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(hist_dir_atm)/$(casename).cam.h0."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     XYT
                         --output-monthly-anomalies $output_monthly_anomalies
@@ -301,7 +376,7 @@ for (diagcase_name, diagcase) in diagcases
             input_file = "$(diagcase_data_dir)/atm_analysis_mean_anomaly_SST.nc"
             output_file = "$(diagcase_data_dir)/atm_analysis_SST_CORR.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
-                pleaseRun(`julia $(lib_dir)/SST_correlation.jl
+                pleaseRun(`julia $(cfg["lib_dir"])/SST_correlation.jl
                      --data-file $input_file
                      --domain-file $domain_atm
                      --output-file $output_file
@@ -312,20 +387,21 @@ for (diagcase_name, diagcase) in diagcases
 
 
     # Atmosphere tropical precipitation asymmetry index
-    # julia $script_analysis_dir/atm_PAI.jl --data-file-prefix="$atm_hist_dir/$casename.cam.h0." --data-file-timestamp-form=YEAR_MONTH --domain-file=$atm_domain --output-file=$atm_analysis31 --beg-year=$diag_beg_year --end-year=$diag_end_year
+    # julia $script_analysis_dir/atm_PAI.jl --data-file-prefix="$atm_hist_dir/$casename.cam.h0." --data-file-timestamp-form=YEAR_MONTH --domain-file=$atm_domain --output-file=$atm_analysis31 --beg-year=$(cfg["diag_beg_year"]) --end-year=$(cfg["diag_end_year"])
 
     # Downstream data. No need to specify --beg-year --end-year
     #julia $script_analysis_dir/AO.jl --data-file=$atm_analysis1 --domain-file=$atm_domain --output-file=$atm_analysis5 --sparsity=$PCA_sparsity
         end
 
+    =#
     end
 
-
+    #=
 
     if cfg["diagnose"]["ice"]
         pleaseRun(`julia $(@__DIR__)/make_extra_data_ice.jl
-            --casename   $(casename)
-            --input-dir  $(hist_dir_ice)
+            --casename   $(cfg["casename"])
+            --input-dir  $(cfg["hist_dir_ice"])
             --output-dir $(extra_data_dir)
             --year-rng   $(diag_beg_year) $(diag_end_year)
             --domain-file $(domain_ice)
@@ -338,13 +414,13 @@ for (diagcase_name, diagcase) in diagcases
                 output_file_zm = "$(diagcase_data_dir)/ice_analysis_mean_anomaly_$(varname)_zm.nc"
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).cice_extra2_rg."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).cice_extra2_rg."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     XYT
                     `)
@@ -360,16 +436,16 @@ for (diagcase_name, diagcase) in diagcases
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
         
-                    pleaseRun(`julia $(lib_dir)/seaice.jl
-                        --data-file-prefix $(extra_data_dir)/$(casename).cice_extra1.
+                    pleaseRun(`julia $(cfg["lib_dir"])/seaice.jl
+                        --data-file-prefix $(extra_data_dir)/$(cfg["casename"]).cice_extra1.
                         --data-file-timestamp-form YEAR_MONTH
                         --domain-file $(domain_ice)
                         --output-file $(output_file)
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
 
                     `)
-    #julia $script_analysis_dir/seaice.jl --data-file-prefix="$concat_dir/$casename.cice_extra.h." --data-file-timestamp-form=YEAR_MONTH --domain-file=$ocn_domain --output-file=$ice_analysis1 --beg-year=$diag_beg_year --end-year=$diag_end_year
+    #julia $script_analysis_dir/seaice.jl --data-file-prefix="$concat_dir/$casename.cice_extra.h." --data-file-timestamp-form=YEAR_MONTH --domain-file=$ocn_domain --output-file=$ice_analysis1 --beg-year=$(cfg["diag_beg_year"]) --end-year=$(cfg["diag_end_year"])
 
                 end
 
@@ -390,8 +466,8 @@ for (diagcase_name, diagcase) in diagcases
 
 
         pleaseRun(`julia $(@__DIR__)/make_extra_data_ocn.jl
-            --casename   $(casename)
-            --input-dir  $(hist_dir_ocn)
+            --casename   $(cfg["casename"])
+            --input-dir  $(cfg["hist_dir_ocn"])
             --output-dir $(extra_data_dir)
             --year-rng   $(diag_beg_year) $(diag_end_year)
             --domain-file $(domain_ocn)
@@ -405,13 +481,13 @@ for (diagcase_name, diagcase) in diagcases
             if ! pop2_option
                 output_file = "$(diagcase_data_dir)/ocn_analysis_OHT.nc"
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/ocn_heat_transport.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra4_OHT."
+                    pleaseRun(`julia $(cfg["lib_dir"])/ocn_heat_transport.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).EMOM_extra4_OHT."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_ocn)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                     `)
                 end
             end
@@ -421,13 +497,13 @@ for (diagcase_name, diagcase) in diagcases
                 output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra1_rg."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).EMOM_extra1_rg."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     XYT
                     `; igs=true)
@@ -442,13 +518,13 @@ for (diagcase_name, diagcase) in diagcases
                 output_file_zm = "$(diagcase_data_dir)/ocn_analysis_mean_anomaly_$(varname)_zm.nc"
 
                 if !isfile(output_file) || parsed["diag-overwrite"]
-                    pleaseRun(`julia $(lib_dir)/mean_anomaly.jl
-                         --data-file-prefix "$(extra_data_dir)/$(casename).EMOM_extra2_rg."
+                    pleaseRun(`julia $(cfg["lib_dir"])/mean_anomaly.jl
+                         --data-file-prefix "$(extra_data_dir)/$(cfg["casename"]).EMOM_extra2_rg."
                          --data-file-timestamp-form YEAR_MONTH
                          --domain-file $(domain_atm)
                          --output-file $output_file
-                         --beg-year $diag_beg_year
-                         --end-year $diag_end_year
+                         --beg-year $(cfg["diag_beg_year"])
+                         --end-year $(cfg["diag_end_year"])
                          --varname  $(varname)
                          --dims     XYT
                     `; igs=true)
@@ -459,5 +535,5 @@ for (diagcase_name, diagcase) in diagcases
             end
         end     
     end
-
+    =#
 end
