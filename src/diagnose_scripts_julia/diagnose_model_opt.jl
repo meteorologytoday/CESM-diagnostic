@@ -142,13 +142,19 @@ for (diagcase_name, diagcase) in diagcases
                     println("[$label] Output missing. Start diagnose")
                     cmds = diag_entry.func(case_cfg, _params)
 
-                    if typeof(cmds) <: AbstractArray
-                        for (i, cmd) in enumerate(cmds)
-                            println("($i) ", cmd)
+                    if parsed["debug"]
+                        println("Option --debug is set. Print only the commands.")
+                        if typeof(cmds) <: AbstractArray
+                            for (i, cmd) in enumerate(cmds)
+                                println("($i) ", cmd)
+                            end
+                        else
+                            println(cmds)
                         end
                     else
-                        println(cmds)
+                        pleaseRun(cmds)
                     end
+
                 else
                     println("[$label] Output already exists. Skip.")
                 end 

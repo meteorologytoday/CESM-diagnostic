@@ -26,22 +26,29 @@ addDiagnoseEntry(DiagnoseEntry(
                     Nx = "Nx"
                     Ny = "Ny"
                     Nz = "Nz"
+                    extra_ncap2 = "HMXL2D=array(0.0,0.0,/\$time,\$$Ny,\$$Nx/); HMXL2D(0,:,:)=HMXL(0,0,:,:);"
                 else
                     old_file  = joinpath(cfg["hist_dir_ocn"],  "$(cfg["casename"]).pop.h.$(date_str).nc")
                     Nx = "nlon"
                     Ny = "nlat"
                     Nz = "z_t"
+                    extra_ncap2 = "HMXL=HMXL/100.0;" # Convert from centimeter to meter
                 end
 
 
                 new_file1 = joinpath(output_dir, "$(cfg["casename"]).EMOM_extra1.$(date_str).nc")
                 new_file2 = joinpath(output_dir, "$(cfg["casename"]).EMOM_extra1_rg.$(date_str).nc")
-                
+               
 
                 push!(cmds, `ncap2 -h -O -v 
-                            -s "SST=array(0.0,0.0,/\$time,\$$Ny,\$$Nx/);  SST(0,:,:)=TEMP(0, 0, :, :);"
+                            -s "SST=array(0.0,0.0,/\$time,\$$Ny,\$$Nx/);  SST(0,:,:)=TEMP(0,0, :, :);"
+                            -s $extra_ncap2
                             $old_file $new_file1`
                 )
+
+                if ! cfg["pop2"]
+                    push!(cmds, `ncrename -v HMXL2D,HMXL $new_file1`)
+                end
        
                 if cfg["pop2"]
                     push!(cmds, `ncrename -d nlat,Ny -d nlon,Nx -d z_t,Nz $new_file1`)
