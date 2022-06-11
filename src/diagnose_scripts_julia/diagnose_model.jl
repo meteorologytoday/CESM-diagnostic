@@ -128,7 +128,6 @@ for (diagcase_name, diagcase) in diagcases
                 `)
             end 
  
-#=
             output_file = "$(diagcase_data_dir)/atm_analysis_ENSO.nc"
             if !isfile(output_file) || parsed["diag-overwrite"]
                 pleaseRun(`julia $(lib_dir)/EOFs/ENSO.jl
@@ -199,7 +198,6 @@ for (diagcase_name, diagcase) in diagcases
                     --end-year $diag_end_year
                 `)
             end 
-  =#          
 
             # 3-dimensional fields
             for varname in ["U", "T", "ICEFRAC"]
