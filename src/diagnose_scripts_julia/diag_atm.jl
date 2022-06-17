@@ -94,8 +94,15 @@ addDiagnoseEntry(DiagnoseEntry(
             cmds = []
             for varname in params
                 output_file = joinpath(cfg["diagcase_data_dir"], "atm_analysis_mean_anomaly_$(varname).nc")
+
+                if varname == "PREC_TOTAL"
+                    data_file_prefix = "$(cfg["extra_data_dir"])/PRECIP/$(cfg["casename"]).cam_extra1."
+                else
+                    data_file_prefix = "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
+                end
+
                 push!(cmds, `julia $(cfg["lib_dir"])/mean_anomaly.jl
-                     --data-file-prefix "$(cfg["hist_dir_atm"])/$(cfg["casename"]).cam.h0."
+                     --data-file-prefix $data_file_prefix
                      --data-file-timestamp-form YEAR_MONTH
                      --domain-file $(cfg["domain_atm"])
                      --output-file $output_file

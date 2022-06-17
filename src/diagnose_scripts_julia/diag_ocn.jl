@@ -6,7 +6,7 @@ addDiagnoseEntry(DiagnoseEntry(
             output_files = []
             for y = cfg["diag_beg_year"]:cfg["diag_end_year"], m=1:12
                 date_str = format("{:04d}-{:02d}", y, m)
-                push!(output_files, joinpath(output_dir, "$(cfg["casename"]).EMOM_extra1_rg.$(date_str).nc"))
+                push!(output_files, joinpath(output_dir, "$(cfg["casename"]).ocnsfc_rg.$(date_str).nc"))
             end
 
             return output_files 
@@ -36,8 +36,8 @@ addDiagnoseEntry(DiagnoseEntry(
                 end
 
 
-                new_file1 = joinpath(output_dir, "$(cfg["casename"]).EMOM_extra1.$(date_str).nc")
-                new_file2 = joinpath(output_dir, "$(cfg["casename"]).EMOM_extra1_rg.$(date_str).nc")
+                new_file1 = joinpath(output_dir, "$(cfg["casename"]).ocnsfc.$(date_str).nc")
+                new_file2 = joinpath(output_dir, "$(cfg["casename"]).ocnsfc_rg.$(date_str).nc")
                
 
                 push!(cmds, `ncap2 -h -O -v 
@@ -79,7 +79,7 @@ addDiagnoseEntry(DiagnoseEntry(
             for varname in params
                 output_file = joinpath(cfg["diagcase_data_dir"], "ocn_analysis_mean_anomaly_$(varname).nc")
                 push!(cmds, `julia $(cfg["lib_dir"])/mean_anomaly.jl
-                     --data-file-prefix "$(cfg["extra_data_dir"])/ocn-REGRID/$(cfg["casename"]).EMOM_extra1_rg."
+                     --data-file-prefix "$(cfg["extra_data_dir"])/ocn-REGRID/$(cfg["casename"]).ocnsfc_rg."
                      --data-file-timestamp-form YEAR_MONTH
                      --domain-file $(cfg["domain_atm"])
                      --output-file $output_file
