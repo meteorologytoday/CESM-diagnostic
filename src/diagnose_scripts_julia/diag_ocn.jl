@@ -32,7 +32,8 @@ addDiagnoseEntry(DiagnoseEntry(
                     Nx = "nlon"
                     Ny = "nlat"
                     Nz = "z_t"
-                    extra_ncap2 = "HMXL=HMXL/100.0; TMXL=TMXL/100.0; XMXL=XMXL/100.0;" # Convert from centimeter to meter
+                    #extra_ncap2 = "HMXL=HMXL/100.0; TMXL=TMXL/100.0; XMXL=XMXL/100.0;" # Convert from centimeter to meter
+                    extra_ncap2 = "TMXL=TMXL/100.0; XMXL=XMXL/100.0;" # Convert from centimeter to meter
                 end
 
 
@@ -54,7 +55,7 @@ addDiagnoseEntry(DiagnoseEntry(
                     push!(cmds, `ncrename -d nlat,Ny -d nlon,Nx -d z_t,Nz $new_file1`)
                 end
 
-                push!(cmds, `ncremap -R '--rgr lat_nm_in=Ny --rgr lon_nm_in=Nx' -m $(cfg["remap-file-nn-ocn2atm"]) $new_file1 $new_file2`) 
+                push!(cmds, `ncremap --no_stdin -R '--rgr lat_nm_in=Ny --rgr lon_nm_in=Nx' -m $(cfg["remap-file-nn-ocn2atm"]) $new_file1 $new_file2`) 
             end
 
             return cmds
