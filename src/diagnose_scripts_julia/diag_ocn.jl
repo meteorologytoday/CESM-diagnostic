@@ -32,7 +32,7 @@ addDiagnoseEntry(DiagnoseEntry(
                     Nx = "nlon"
                     Ny = "nlat"
                     Nz = "z_t"
-                    extra_ncap2 = "HMXL=HMXL/100.0;" # Convert from centimeter to meter
+                    extra_ncap2 = "HMXL=HMXL/100.0; TMXL=TMXL/100.0; XMXL=XMXL/100.0;" # Convert from centimeter to meter
                 end
 
 
