@@ -25,9 +25,7 @@ module CESMReader2
 
         for filename in filenames
 
-            if verbose
-                println(format("Reading file: {:s}", filename))
-            end
+            verbose &&  println(format("Reading file: {:s}", filename))
 
             ds = Dataset(filename, "r")
 
