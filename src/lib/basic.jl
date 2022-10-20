@@ -5,25 +5,25 @@ using Statistics
 using JSON
 
 
-function computePressure(;
-    A  :: Array{T, 1},
-    B  :: Array{T, 1},
-    ps :: Union{T, Array{T, 1}, Array{T, 2}},
+function calPressure(;
+    a  :: Array{T, 1},
+    b  :: Array{T, 1},
+    ps :: Union{T, Array{T, 2}, Array{T, 3}},
     p0 :: T = 1e5,
 ) where T <: AbstractFloat
     
 
-    if ps <: Array
+    if typeof(ps) <: Array
     
         s = [1 for i = 1:length(size(ps))]
         
-        A = reshape(A, s..., :)
-        B = reshape(B, s..., :)
+        a = reshape(a, s..., :)
+        b = reshape(b, s..., :)
         ps = reshape(ps, size(ps)..., 1)
         
     end
 
-    p = A .* p0 .+ B .* ps
+    p = a .* p0 .+ b .* ps
 
     return p
  
