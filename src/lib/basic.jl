@@ -8,7 +8,7 @@ using JSON
 function calPressure(;
     a  :: Array{T, 1},
     b  :: Array{T, 1},
-    ps :: Union{T, Array{T, 2}, Array{T, 3}},
+    ps :: Union{T, Array{T, 2}},
     p0 :: T = 1e5,
 ) where T <: AbstractFloat
     
